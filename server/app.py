@@ -38,7 +38,8 @@ async def serve_index():
 async def upload_croqui(
     file: UploadFile = File(...),
     notes: Optional[str] = Form(""),
-    api_key: Optional[str] = Form("")
+    api_key: Optional[str] = Form(""),
+    model_name: Optional[str] = Form("gemini-1.5-pro")
 ):
     """Processes uploaded blueprint (PDF, PNG, JPG, WEBP, etc.) and runs CAD vision interpretation."""
     if not BlueprintIngestor.is_supported(file.filename):
@@ -61,7 +62,11 @@ async def upload_croqui(
 
     # AI Vision interpretation
     engine = TechnicalDrawingVisionEngine(api_key=api_key or None)
-    spec, summary = engine.interpret_drawing(primary_image, additional_notes=notes or "")
+    spec, summary = engine.interpret_drawing(
+        primary_image, 
+        additional_notes=notes or "",
+        model_name=model_name or "gemini-1.5-pro"
+    )
 
     # Generate 3D visualization and iLogic code
     threejs_data = model_to_threejs_data(spec)

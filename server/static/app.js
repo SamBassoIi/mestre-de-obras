@@ -89,6 +89,7 @@ function initDOM() {
     formData.append('file', fileInput.files[0]);
     formData.append('notes', document.getElementById('studentNotes').value);
     formData.append('api_key', apiKeyInput.value);
+    formData.append('model_name', document.getElementById('aiModel').value);
 
     try {
       const res = await fetch('/api/upload', {

@@ -108,7 +108,12 @@ class TechnicalDrawingVisionEngine:
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
 
-    def interpret_drawing(self, image: Image.Image, additional_notes: str = "") -> Tuple[CadModelSpecification, str]:
+    def interpret_drawing(
+        self, 
+        image: Image.Image, 
+        additional_notes: str = "",
+        model_name: str = "gemini-1.5-pro"
+    ) -> Tuple[CadModelSpecification, str]:
         """Interprets a technical drawing image and returns a CadModelSpecification + analysis summary."""
         if not self.api_key:
             # Fallback heuristic / sample model for testing when API key is not configured
@@ -132,7 +137,7 @@ class TechnicalDrawingVisionEngine:
             )
 
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model=model_name,
                 contents=[
                     types.Part.from_bytes(data=jpeg_bytes, mime_type="image/jpeg"),
                     prompt
