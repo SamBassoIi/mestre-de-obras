@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoCroqui3D — Desenho Técnico 2 & Autodesk Inventor</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Three.js and OrbitControls via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Top Header -->
+    <header class="top-nav">
+      <div class="brand">
+        <div class="logo-icon">📐</div>
+        <div>
+          <h1>AutoCroqui3D</h1>
+          <span class="subtitle">Interpretação de Croquis (DT2) & Modelagem Automática no Autodesk Inventor</span>
+        </div>
+      </div>
+      <div class="nav-badges">
+        <span class="badge badge-primary">ABNT NBR 10067 / 10126</span>
+        <span class="badge badge-success">Autodesk Inventor Direct COM + iLogic</span>
+        <button id="btnOpenHelp" class="btn-ghost">❓ Como usar no Inventor</button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <!-- Upload & Configuration Bar -->
+      <section class="upload-section card">
+        <form id="uploadForm" class="upload-form">
+          <div class="drop-zone" id="dropZone">
+            <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.webp,.bmp,.tiff" hidden>
+            <div class="drop-zone-content">
+              <span class="upload-icon">📂</span>
+              <p><strong>Arraste seu croqui, desenho técnico ou PDF aqui</strong> ou clique para selecionar</p>
+              <span class="file-hints">Suporta PDF multipágina, fotos de croqui à mão livre, escaneamentos (PNG, JPG, WEBP)</span>
+              <div id="fileSelectedBadge" class="file-badge hidden"></div>
+            </div>
+          </div>
+
+          <div class="config-bar">
+            <div class="form-group flex-1">
+              <label for="studentNotes">Observações da Peça / Exercício:</label>
+              <input type="text" id="studentNotes" placeholder="Ex: Exercício 3 da Prancha 4 - Suporte do Mancal">
+            </div>
+
+            <div class="form-group flex-1">
+              <label for="apiKey">Chave Google Gemini API (Opcional):</label>
+              <div class="input-with-icon">
+                <input type="password" id="apiKey" placeholder="Cole sua GEMINI_API_KEY (ou deixe vazio para modo demo)">
+                <button type="button" id="toggleApiKey" class="btn-icon">👁️</button>
+              </div>
+            </div>
+
+            <button type="submit" id="btnAnalyze" class="btn btn-primary btn-large">
+              <span class="btn-text">⚡ Interpretar & Modelar</span>
+              <span class="spinner hidden"></span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Status / Summary Toast -->
+      <div id="statusAlert" class="alert hidden">
+        <span id="statusIcon">ℹ️</span>
+        <span id="statusText"></span>
+      </div>
+
+      <!-- Split Interactive Workspace (Hidden until file analyzed) -->
+      <div id="resultsWorkspace" class="workspace-grid hidden">
+        <!-- Left: Original Blueprint & Parameter Editor -->
+        <div class="card workspace-panel">
+          <div class="panel-header">
+            <h3>📑 Croqui Original & Medidas Extraídas</h3>
+            <span class="tag" id="partTitleTag">Peça</span>
+          </div>
+
+          <!-- Tabs: Imagem vs Editor de Cotas -->
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="tabImage">🖼️ Croqui Ingerido</button>
+            <button class="tab-btn" data-tab="tabParameters">✏️ Tabela de Cotas (Ajuste Fino)</button>
+          </div>
+
+          <!-- Tab 1: Image Viewer -->
+          <div id="tabImage" class="tab-content active">
+            <div class="image-viewer-container">
+              <img id="blueprintPreview" src="" alt="Croqui Original">
+            </div>
+          </div>
+
+          <!-- Tab 2: Parameter Editor -->
+          <div id="tabParameters" class="tab-content">
+            <form id="parametersForm" class="parameters-form">
+              <h4>Corpo Base (Extrusão Primária)</h4>
+              <div class="grid-3">
+                <div class="form-group">
+                  <label>Comprimento X (mm):</label>
+                  <input type="number" step="0.5" id="paramBaseLength" required>
+                </div>
+                <div class="form-group">
+                  <label>Largura Y (mm):</label>
+                  <input type="number" step="0.5" id="paramBaseWidth" required>
+                </div>
+                <div class="form-group">
+                  <label>Altura / Espessura Z (mm):</label>
+                  <input type="number" step="0.5" id="paramBaseHeight" required>
+                </div>
+              </div>
+
+              <h4>Cortes & Rebaixos Identificados</h4>
+              <div id="cutsContainer" class="features-list"></div>
+
+              <h4>Furos Cilíndricos Identificados</h4>
+              <div id="holesContainer" class="features-list"></div>
+
+              <div class="form-actions">
+                <button type="button" id="btnUpdateModel" class="btn btn-secondary">
+                  🔄 Atualizar Modelo 3D & iLogic
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right: Real-Time 3D Three.js Viewport -->
+        <div class="card workspace-panel">
+          <div class="panel-header">
+            <h3>🧊 Visualização 3D Paramétrica</h3>
+            <div class="viewport-controls">
+              <button id="btnToggleWireframe" class="btn-small">Modo Arestas</button>
+              <button id="btnResetCamera" class="btn-small">Resetar Câmera</button>
+            </div>
+          </div>
+
+          <div id="threeViewport" class="three-container"></div>
+
+          <!-- Action Toolbar for Autodesk Inventor -->
+          <div class="inventor-toolbar">
+            <div class="action-buttons-group">
+              <button id="btnSendToInventor" class="btn btn-inventor">
+                🚀 Enviar para Autodesk Inventor (Direto)
+              </button>
+              <button id="btnCopyIlogic" class="btn btn-secondary">
+                📋 Copiar Regra iLogic
+              </button>
+              <button id="btnDownloadIlogic" class="btn btn-ghost">
+                💾 Baixar .iLogicVb
+              </button>
+              <button id="btnDownloadObj" class="btn btn-ghost">
+                📦 Baixar .OBJ
+              </button>
+            </div>
+          </div>
+
+          <!-- Collapsible iLogic Code Preview -->
+          <details class="code-preview-details">
+            <summary>Ver Código iLogic Gerado (.iLogicVb)</summary>
+            <div class="code-container">
+              <pre><code id="ilogicCodeDisplay"></code></pre>
+            </div>
+          </details>
+        </div>
+      </div>
+    </main>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal hidden">
+      <div class="modal-content card">
+        <div class="modal-header">
+          <h3>Como Rodar no Autodesk Inventor</h3>
+          <button id="btnCloseModal" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <h4>Opção 1: Envio Direto via COM API (1 Clique)</h4>
+          <p>Se o Autodesk Inventor estiver instalado no seu Windows, basta clicar no botão <strong>"Enviar para Autodesk Inventor (Direto)"</strong>. O sistema conecta na sua sessão do Inventor e modela a peça com sketches e extrusões paramétricas em tempo real!</p>
+          
+          <h4>Opção 2: Regra iLogic Portável (.iLogicVb)</h4>
+          <p>Para usar em qualquer máquina (laboratórios da faculdade, etc.):</p>
+          <ol>
+            <li>No Autodesk Inventor, abra uma nova peça métrica (<strong>Standard (mm).ipt</strong>).</li>
+            <li>Vá na aba <strong>Manage (Gerenciar)</strong> &gt; painel <strong>iLogic</strong> &gt; clique em <strong>Add Rule (Adicionar Regra)</strong>.</li>
+            <li>Dê um nome para a regra (ex: <code>ModelarAutoCroqui</code>).</li>
+            <li>Cole o código gerado pelo AutoCroqui3D e clique em <strong>Save &amp; Run (Salvar e Executar)</strong>.</li>
+            <li>A peça será construída instantaneamente com todo o histórico de operações (features) na árvore!</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
