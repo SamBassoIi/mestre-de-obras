@@ -1,6 +1,13 @@
 # 📐 AutoCroqui3D — Desenho Técnico 2 & Autodesk Inventor
 
+![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Three.js](https://img.shields.io/badge/Three.js-000000?style=for-the-badge&logo=threedotjs&logoColor=white)
+![Google Gemini](https://img.shields.io/badge/Gemini_Multimodal-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)
+
 Sistema inteligente e automatizado para **leitura de croquis mecânicos (à mão livre, escaneados, fotos ou PDFs)** da disciplina de **Desenho Técnico 2**, interpretação semântica de cotas e vistas ortográficas (ABNT NBR 10067 / 10126), e **modelagem 3D automática no Autodesk Inventor**.
+
+![AutoCroqui3D Interface](docs/autocroqui3d-preview.png)
 
 ---
 
@@ -44,7 +51,7 @@ iniciar_autocroqui3d.bat
 
 ### Opção B: Pelo terminal
 ```bash
-C:\Users\samuel.bassoli\portable_python_311\python.exe run.py
+python run.py
 ```
 O servidor iniciará em `http://127.0.0.1:8000` e abrirá automaticamente no seu navegador.
 
@@ -52,7 +59,7 @@ O servidor iniciará em `http://127.0.0.1:8000` e abrirá automaticamente no seu
 
 ## 🔑 Configuração da Chave da API Gemini (Visão Multimodal)
 
-Para utilizar o modelo de visão multimodal avançado (Google Gemini 2.5):
+Para utilizar o modelo de visão multimodal avançado (Google Gemini):
 1. Obtenha uma chave gratuita no [Google AI Studio](https://aistudio.google.com/).
 2. Você pode inseri-la de duas formas:
    - **Diretamente na interface web**: Cole no campo *"Chave Google Gemini API"* (ela é salva localmente no navegador).
@@ -82,7 +89,7 @@ Para utilizar o modelo de visão multimodal avançado (Google Gemini 2.5):
 
 ## 🧪 Testes Automatizados
 
-O sistema conta com 100% de cobertura nos módulos críticos de geometria, schema, iLogic e API:
+O sistema conta com cobertura de testes nos módulos críticos de geometria, schema, iLogic e API:
 ```bash
-C:\Users\samuel.bassoli\portable_python_311\python.exe -m pytest tests/
+python -m pytest tests/
 ```

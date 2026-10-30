@@ -7,12 +7,11 @@ echo.
 echo Iniciando o servidor local e abrindo o navegador...
 echo.
 
-set PYTHON_EXE=C:\Users\samuel.bassoli\portable_python_311\python.exe
-
-if not exist "%PYTHON_EXE%" (
+where python >nul 2>nul
+if %ERRORLEVEL% EQU 0 (
     python run.py
 ) else (
-    "%PYTHON_EXE%" run.py
+    py run.py
 )
 
 pause

@@ -17,3 +17,4 @@ htmlcov/
 # Temporary / OS
 Thumbs.db
 .DS_Store
+.planning/
